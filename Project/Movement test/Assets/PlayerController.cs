@@ -5,12 +5,13 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public Rigidbody2D rb;
-    public float speed = 40f;
-    private float horDir = 0f;
-    private float verDir = 0f;
-    private Vector3 direction = Vector3.zero;
+    public float speed = 0f;
+    private Vector2 targetVelocity = Vector2.zero;
+    public float dashforce = 50f;
+    private Vector2 facing = Vector2.zero;
+    private bool dashing = false;
 
-    private void Start()
+    private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
     }
@@ -18,18 +19,38 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        horDir = Input.GetAxisRaw("Horizontal");
-        verDir = Input.GetAxisRaw("Vertical");
 
-        Debug.Log(horDir);
-        Debug.Log(verDir);
+        targetVelocity = new Vector2(Input.GetAxis("Horizontal") * speed, Input.GetAxis("Vertical")) * speed;
+
+        if  (targetVelocity.x != 0  || targetVelocity.y != 0)
+        {
+            facing = new Vector2 (Mathf.Clamp(targetVelocity.x, -1, 1), Mathf.Clamp(targetVelocity.y, -1, 1));
+            Debug.Log(facing);
+        }
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            dashing = true;
+            Debug.Log("Jumped!" + facing);
+        }
 
     }
-
 
     private void FixedUpdate()
     {
-        rb.velocity = (speed * Time.fixedDeltaTime * new Vector2(horDir, verDir));
+        if (targetVelocity.x != 0 || targetVelocity.y != 0 && !dashing)
+        {
+            rb.velocity = targetVelocity * Time.deltaTime;
+        }
+
+        if (dashing)
+        {
+            rb.velocity = facing * dashforce;
+            dashing = false;
+        }
+
+
 
     }
+
 }
