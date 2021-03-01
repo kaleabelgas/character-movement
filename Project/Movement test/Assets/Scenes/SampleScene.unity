@@ -6777,8 +6777,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 750766854}
-  speed: 20
-  dashforce: 20
+  speed: 50
+  dashforce: 4
+  dashTime: 0.05
 --- !u!95 &750766856
 Animator:
   serializedVersion: 3
