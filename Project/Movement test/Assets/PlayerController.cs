@@ -5,20 +5,29 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public Rigidbody2D rb;
-    public float speed = 1f;
-    public float dashForce = 50f;
-    public float dashTime = 10f;
+    private Rigidbody2D gunRb;
+    public GameObject gun;
+    public Camera cam;
+
+    public float moveSpeed;
+    public float dashForce;
+    public float dashTime;
     public float dashCDDefault;
 
     private float dashCD;
-    private Vector2 facing = Vector2.down;
-    private Vector2 targetDirection = Vector2.zero;
-    private bool dashing = false;
+    private float playerAngle;
+    private Vector2 lastDir = Vector2.down;
+    private Vector2 moveDir = Vector2.zero;
+    private Vector2 mousePos;
+    private Vector2 lookDir;
+    private bool isDashing = false;
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
         dashCD = dashCDDefault;
+        gunRb = gun.GetComponent<Rigidbody2D>();
+        gunRb.isKinematic = false;
+
 
     }
 
@@ -26,46 +35,60 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
 
-        targetDirection = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        
+        moveDir = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
         if (dashCD > 0)
         {
             dashCD -= Time.deltaTime;
 
         }
 
-        Debug.Log(dashCD);
+        //Debug.Log(dashCD);
 
 
-        if (Mathf.Abs(targetDirection.x) > 0.5f || Mathf.Abs(targetDirection.y) > 0.5f)
+        if (Mathf.Abs(moveDir.x) > 0.5f || Mathf.Abs(moveDir.y) > 0.5f)
         {
-            facing = targetDirection;
-            //Debug.Log("Setting both " + facing);
+            lastDir = moveDir;
+            Debug.Log("Setting both " + lastDir);
         }
 
 
 
         if (Input.GetButtonDown("Jump") && dashCD <= 0)
         {
-            dashing = true;
-            Debug.Log("Jumped!" + facing);
+            isDashing = true;
+            Debug.Log("Jumped!" + lastDir);
         }
+
+        mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
+
+
+
     }
 
     private void FixedUpdate()
     {
+        gunRb.MovePosition(transform.position);
         if (dashCD < dashTime)
         {
             Move();
         }
 
-        if (dashing)
+        if (isDashing)
         {
             StartCoroutine(Dash());
         }
 
-        //Debug.Log("Velocity" + rb.velocity);
-        //Debug.Log("Direction" + facing);
+        lookDir = mousePos - rb.position;
+
+        playerAngle = Mathf.Atan2(lookDir.y, lookDir.x) * Mathf.Rad2Deg - 90f;
+
+        
+        gunRb.rotation = playerAngle;
+
+
+        Debug.Log("Velocity" + rb.velocity);
+        Debug.Log("Direction" + lastDir);
 
     }
 
@@ -75,12 +98,12 @@ public class PlayerController : MonoBehaviour
 
         while (Time.time < startTime + dashTime)
         {
-            rb.AddForce(facing * dashForce * Time.deltaTime, ForceMode2D.Impulse);
+            rb.AddForce(lastDir * dashForce * Time.deltaTime, ForceMode2D.Impulse);
             //transform.Translate(Vector2.Lerp(facing * dashforce, transform.position, Time.deltaTime));
             dashCD = dashCDDefault;
             yield return null;
         }
-        dashing = false;
+        isDashing = false;
         yield return null;
 
     }
@@ -88,7 +111,7 @@ public class PlayerController : MonoBehaviour
 
     private void Move()
     {
-        rb.velocity = speed * Time.deltaTime * targetDirection;
+        rb.velocity = moveSpeed * Time.deltaTime * moveDir;
         //transform.Translate(Vector2.Lerp(targetDirection * speed, transform.position, Time.deltaTime));
     }
 
