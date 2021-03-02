@@ -6780,10 +6780,10 @@ MonoBehaviour:
   rb: {fileID: 750766854}
   gun: {fileID: 1437604385}
   cam: {fileID: 519420031}
-  moveSpeed: 700
+  moveSpeed: 10
   dashForce: 150
   dashTime: 0.06
-  dashCDDefault: 0.5
+  dashCDDefault: 0.25
 --- !u!95 &750766856
 Animator:
   serializedVersion: 3
