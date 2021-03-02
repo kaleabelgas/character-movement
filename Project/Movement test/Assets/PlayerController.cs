@@ -5,31 +5,114 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public Rigidbody2D rb;
-    public float speed = 40f;
-    private float horDir = 0f;
-    private float verDir = 0f;
-    private Vector3 direction = Vector3.zero;
+    private Rigidbody2D gunRb;
+    public GameObject gun;
+    public Camera cam;
 
-    private void Start()
+    public float moveSpeed;
+    public float dashForce;
+    public float dashTime;
+    public float dashCDDefault;
+
+    private float dashCD;
+    private float playerAngle;
+    private Vector2 lastDir = Vector2.down;
+    private Vector2 moveDir = Vector2.zero;
+    private Vector2 mousePos;
+    private Vector2 lookDir;
+    private bool isDashing = false;
+
+    private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
+        dashCD = dashCDDefault;
+        gunRb = gun.GetComponent<Rigidbody2D>();
+        gunRb.isKinematic = false;
+
+
     }
 
 
     private void Update()
     {
-        horDir = Input.GetAxisRaw("Horizontal");
-        verDir = Input.GetAxisRaw("Vertical");
 
-        Debug.Log(horDir);
-        Debug.Log(verDir);
+        moveDir = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
+        if (dashCD > 0)
+        {
+            dashCD -= Time.deltaTime;
+
+        }
+
+        //Debug.Log(dashCD);
+
+
+        if (Mathf.Abs(moveDir.x) > 0.5f || Mathf.Abs(moveDir.y) > 0.5f)
+        {
+            lastDir = moveDir;
+            Debug.Log("Setting both " + lastDir);
+        }
+
+
+
+        if (Input.GetButtonDown("Jump") && dashCD <= 0)
+        {
+            isDashing = true;
+            Debug.Log("Jumped!" + lastDir);
+        }
+
+        mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
+
+
 
     }
-
 
     private void FixedUpdate()
     {
-        rb.velocity = (speed * Time.fixedDeltaTime * new Vector2(horDir, verDir));
+        gunRb.MovePosition(transform.position);
+        if (dashCD < dashTime)
+        {
+            Move();
+        }
+
+        if (isDashing)
+        {
+            StartCoroutine(Dash());
+        }
+
+        lookDir = mousePos - rb.position;
+
+        playerAngle = Mathf.Atan2(lookDir.y, lookDir.x) * Mathf.Rad2Deg - 90f;
+
+        
+        gunRb.rotation = playerAngle;
+
+
+        Debug.Log("Velocity" + rb.velocity);
+        Debug.Log("Direction" + lastDir);
 
     }
+
+    IEnumerator Dash()
+    {
+        float startTime = Time.time;
+
+        while (Time.time < startTime + dashTime)
+        {
+            rb.AddForce(lastDir * dashForce * Time.deltaTime, ForceMode2D.Impulse);
+            //transform.Translate(Vector2.Lerp(facing * dashforce, transform.position, Time.deltaTime));
+            dashCD = dashCDDefault;
+            yield return null;
+        }
+        isDashing = false;
+        yield return null;
+
+    }
+
+
+    private void Move()
+    {
+        rb.velocity = moveSpeed * Time.deltaTime * moveDir;
+        //transform.Translate(Vector2.Lerp(targetDirection * speed, transform.position, Time.deltaTime));
+    }
+
 }
