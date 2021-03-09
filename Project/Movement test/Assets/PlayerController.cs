@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour
     public Animator animator;
     public Transform firePoint;
     public GameObject bulletPrefab;
+    public GameObject dashParticle;
     private Rigidbody2D gunRb; // Initialize gun rigidbody
 
 
@@ -114,6 +115,8 @@ public class PlayerController : MonoBehaviour
         // initializes start time of dash 
         float startTime = Time.time;
 
+        Instantiate(dashParticle, transform.position, Quaternion.identity);
+
         // run function while time is not yet reached 
         while (Time.time < startTime + dashTime)
         {
@@ -126,6 +129,7 @@ public class PlayerController : MonoBehaviour
 
         // this is outside the while loop so that we know to stop the function when the time specified in dashTime is done
         isDashing = false;
+        //Object.Destroy(dashParticle);
         yield return null;
     }
 
@@ -146,8 +150,9 @@ public class PlayerController : MonoBehaviour
 
     private void Shoot()
     {
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation); 
+        Instantiate(dashParticle, transform.position, Quaternion.identity);
         Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        //bulletRb.AddForce(firePoint.up * bulletForce, ForceMode2D.Impulse);
+        bulletRb.AddForce(firePoint.up * bulletForce, ForceMode2D.Impulse);
     }
 }
