@@ -97,7 +97,7 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
 
-        // this is outside the while loop so that we know to stop the function when the time specified in dashTime is donee
+        // this is outside the while loop so that we know to stop the function when the time specified in dashTime is done
         isDashing = false;
         yield return null;
     }
