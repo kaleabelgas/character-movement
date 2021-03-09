@@ -7,17 +7,24 @@ public class PlayerController : MonoBehaviour
     public Rigidbody2D rb; // Get RigidBody of Object
     public GameObject gun; // Connect to gun GameObject
     public Camera cam; // Connect to camera
+    public Animator animator;
+    public Transform firePoint;
+    public GameObject bulletPrefab;
+    public GameObject dashParticle;
     private Rigidbody2D gunRb; // Initialize gun rigidbody
+
 
     public float moveSpeed; // Player speed
     public float dashForce; // amount of dash
     public float dashTime; // duration of dash - directly proportionate to dashforce;
     public float dashCDDefault; // Set default cd of dash
+    public float bulletForce = 200f;
 
     private float dashCD; // Amount left on dash cooldown
     private float playerAngle; // stores angle of mouse relative to player
 
     private bool isDashing = false; // true if space is pressed
+    private bool facingRight = true;
 
     private Vector2 lastDirection = Vector2.down; // stores last direction of player
     private Vector2 moveDirection = Vector2.zero; // vector2 of current movement input 
@@ -35,6 +42,14 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         moveDirection = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")); // get movement input and save it to movedir vector2
+
+        animator.SetFloat("MovementX", Mathf.Abs(moveDirection.x));
+        animator.SetFloat("MovementY", Mathf.Abs(moveDirection.y));
+
+        if (Input.GetButtonDown("Fire1"))
+        {
+            Shoot();
+        }
 
 
         // this conditional is here so that dashcd doesnt go to absurd amounts below 0
@@ -58,12 +73,25 @@ public class PlayerController : MonoBehaviour
 
         // converts mouse position in screen space to mouse position in world space and saves it to a variable
         mousePosition = cam.ScreenToWorldPoint(Input.mousePosition);
+
+        if (moveDirection.x > 0 && !facingRight)
+        {
+            Flip();
+        }
+
+        else if (moveDirection.x < 0 && facingRight)
+        {
+            Flip();
+        }
+
+
+
     }
 
     private void FixedUpdate()
     {
         // moves the gun in relation to the player.
-        gunRb.MovePosition(transform.position);
+        gunRb.transform.position = transform.position;
 
         // necessary so that the dash will complete before setting velocity/position. waits for dash cooldown to be less than the time it takes to dash
         if (dashCD < dashTime)
@@ -87,6 +115,8 @@ public class PlayerController : MonoBehaviour
         // initializes start time of dash 
         float startTime = Time.time;
 
+        Instantiate(dashParticle, transform.position, Quaternion.identity);
+
         // run function while time is not yet reached 
         while (Time.time < startTime + dashTime)
         {
@@ -99,6 +129,7 @@ public class PlayerController : MonoBehaviour
 
         // this is outside the while loop so that we know to stop the function when the time specified in dashTime is done
         isDashing = false;
+        //Object.Destroy(dashParticle);
         yield return null;
     }
 
@@ -107,5 +138,21 @@ public class PlayerController : MonoBehaviour
     {
         // moves the position according to current position modified by target move direction, multiplied to the speed and time.deltatime to stay constant.
         rb.MovePosition(rb.position + moveDirection * moveSpeed * Time.deltaTime);
+    }
+
+    private void Flip()
+    {
+        facingRight = !facingRight;
+        //gun.transform.Rotate(0f, 180f, 0f);
+        transform.Rotate(0f, 180f, 0f);
+        Debug.Log("Flipped!");
+    }
+
+    private void Shoot()
+    {
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation); 
+        Instantiate(dashParticle, transform.position, Quaternion.identity);
+        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+        bulletRb.AddForce(firePoint.up * bulletForce, ForceMode2D.Impulse);
     }
 }
